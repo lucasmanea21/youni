@@ -179,6 +179,7 @@ void lee (int startX, int startY) {
 }
 
 int freeSpace (int x, int y) {
+    if (mat[x][y].val != 0) return 0;
     int res = 0;
     for (int i = 0; i < 4; i++) {
         if (mat[x + dx[i]][y + dy[i]].val == 0) {
