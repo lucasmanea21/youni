@@ -43,7 +43,6 @@ void readInput() {
         mat[i][0].doneLee = mat[i][n + 1].doneLee = mat[0][i].doneLee = mat[n + 1][i].doneLee = true;
     }
 
-    string s;
     for (int i = 1; i <= n; i++) {
         if (i != 1) {
             fin >> s;
