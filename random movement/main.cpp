@@ -22,7 +22,7 @@ const int dx[4] = { 0,  1,  0, -1};
 const int dy[4] = {-1,  0,  1,  0};
 int mySnake;
 int enemySnake;
-bool test = true;
+bool test = false;
 
 void readInput() {
     string s;
@@ -73,12 +73,15 @@ char findDirection() {
 
     srand(time(nullptr));
     for (int i = 0; i < 4; i++) {
-        w[i] = rand() % 500'000'000;
+        w[i] = rand() % 50'000'000;
     }
 
     for (int i = 0; i < 4; i++) {
-        if (freeSpace(headX + dx[i], headY + dy[i]) == 0) {
+        if (mat[headX + dx[i]][headY + dy[i]].val != 0) {
             w[i] += 1'000'000'000;
+        }
+        if (freeSpace(headX + dx[i], headY + dy[i]) == 0) {
+            w[i] += 800'000'000;
         }
     }
 
