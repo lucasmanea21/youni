@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1692124914 source:c:\andrei\programe\c++\concursuri\cshackathon\algorithm1\main.cpp
+	<iostream>
+	<fstream>
+	<vector>
+	<queue>
+	<cstring>
+
