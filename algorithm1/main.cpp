@@ -20,14 +20,18 @@ struct Cell {
 vector< vector<Cell> > mat;
 queue<Cell*> headPositions;
 int headX, headY;
-const int n = 20;
+int n;
 const int dx[4] = { 0,  1,  0, -1};
 const int dy[4] = {-1,  0,  1,  0};
-int mySnake = 1;
-int enemySnake = 2;
+int mySnake;
+int enemySnake;
 bool test = false;
 
 void readInput() {
+    string s;
+    fin >> s;
+    n = s.size();
+
     mat.clear();
     mat.resize(n + 2);
     for (int i = 0; i <= n + 1; i++) {
@@ -41,7 +45,9 @@ void readInput() {
 
     string s;
     for (int i = 1; i <= n; i++) {
-        fin >> s;
+        if (i != 1) {
+            fin >> s;
+        }
         for (int j = 1; j <= n; j++) {
             mat[i][j].val = s[j - 1] - '0';
             mat[i][j].isWhite = (i + j) % 2;

@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1692127472 source:c:\andrei\programe\c++\concursuri\cshackathon\youni\random movement\main.cpp
+	<iostream>
+	<fstream>
+	<vector>
+	<cstring>
+	<cstdlib>
+	<ctime>
+
