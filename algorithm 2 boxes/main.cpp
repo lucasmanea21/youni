@@ -326,27 +326,9 @@ void considerBoxing() {
         bestCell = bCVertical;
     }
 
-    boxing = true;
-    for (int i = 0; i < 4; i++) {
-        int x, y;
-
-        if (i / 2) {
-            x = minEnemyX;
-        }
-        else {
-            x = maxEnemyX;
-        }
-
-        if (i % 2) {
-            y = minEnemyY;
-        }
-        else {
-            y = maxEnemyY;
-        }
-
-        if (min(minHorizontalWallDistance(headX, headY), minVerticalWallDistance(headX, headY)) * 2 <= min(minHorizontalWallDistance(x, y), minVerticalWallDistance(x, y))) {
-            boxing = false;
-        }
+    boxing = false;
+    if (minWallDistance(headX, headY) * 2 <= mat[headX][headY].minDistEnemyHead) {
+        boxing = true;
     }
 }
 
