@@ -28,7 +28,16 @@ const int dx[4] = { 0,  1,  0, -1};
 const int dy[4] = {-1,  0,  1,  0};
 int mySnake;
 int enemySnake;
+Cell* bestCell;
+bool boxing;
+bool huggingWall;
+bool goingUp, goingDown, goingLeft, goingRight;
+bool lining;
+bool hasTarget;
+bool hasTargetX, hasTargetY;
+int targetX, targetY;
 bool test = false;
+int minEnemyX = 2'000'000'000, maxEnemyX = -1, minEnemyY = 2'000'000'000, maxEnemyY = -1;
 
 void readInput() {
     string s;
@@ -54,6 +63,7 @@ void readInput() {
             mat[i][j].isWhite = (i + j) % 2;
             mat[i][j].x = i;
             mat[i][j].y = j;
+            mat[i][j].distMyHead = 2'000'000'000;
         }
     }
 
@@ -237,50 +247,291 @@ int minDistToWall (int x, int y) {
     return min(a, b);
 }
 
-bool snakeTouchedWall (int snakeId) {
+bool snakeTouchedBottomWall (int snakeId) {
     for (int i = 1; i <= n; i++) {
-        if (mat[i][1].val == snakeId) return true;
-        if (mat[i][n].val == snakeId) return true;
-        if (mat[1][i].val == snakeId) return true;
         if (mat[n][i].val == snakeId) return true;
     }
     return false;
 }
 
+bool snakeTouchedTopWall (int snakeId) {
+    for (int i = 1; i <= n; i++) {
+        if (mat[1][i].val == snakeId) return true;
+    }
+    return false;
+}
+
+bool snakeTouchedLeftWall (int snakeId) {
+    for (int i = 1; i <= n; i++) {
+        if (mat[i][1].val == snakeId) return true;
+    }
+    return false;
+}
+
+bool snakeTouchedRightWall (int snakeId) {
+    for (int i = 1; i <= n; i++) {
+        if (mat[i][n].val == snakeId) return true;
+    }
+    return false;
+}
+
+bool snakeTouchedWall (int snakeId) {
+    if (snakeTouchedBottomWall(snakeId)) return true;
+    if (snakeTouchedTopWall(snakeId)) return true;
+    if (snakeTouchedLeftWall(snakeId)) return true;
+    if (snakeTouchedRightWall(snakeId)) return true;
+    return false;
+}
+
+void updateWallCellCandidate(Cell* newCell, int &dist, Cell* &bestCell) {
+    int newDist = newCell->distMyHead;
+    if (newDist < dist) {
+        dist = newDist;
+        bestCell = newCell;
+    }
+}
+
+int minHorizontalWallDistance (int x, int y) {
+    return min(x - 1, n - x);
+}
+
+int minVerticalWallDistance (int x, int y) {
+    return min(y - 1, n - y);
+}
+
+int minWallDistance (int x, int y) {
+    return min(minVerticalWallDistance(x, y), minHorizontalWallDistance(x, y));
+}
+
 void considerBoxing() {
     if (snakeTouchedWall(mySnake)) return;
+    setupLee();
+    calculateDistancesFromMyHead(0, true);
+    Cell* bCHorizontal;
+    Cell* bCVertical;
 
-    int dL, dR, dT, dB, dirL, dirR, dirT, dirB;
-    dL = dR = dT = dB = 2'000'000'000;
-    Cell *bL, *bR, *bB, *bT;
-    for (int i = 0; i < 4; i++) {
-        setupLee();
-        calculateDistancesFromMyHead(i, false);
-        for (int j = 1; j <= n; j++) {
-        }
+    int minDist = 2'000'000'000;
+    for (int i = 1; i <= n; i++) {
+        updateWallCellCandidate(&mat[i][1], minDist, bCVertical);
+        updateWallCellCandidate(&mat[i][n], minDist, bCVertical);
+        updateWallCellCandidate(&mat[1][i], minDist, bCHorizontal);
+        updateWallCellCandidate(&mat[n][i], minDist, bCHorizontal);
     }
 
-    // left/right wall
-    bool goToLeftWall, goToRightWall, goToTopWall, goToBottomWall;
-    goToLeftWall = goToRightWall = goToTopWall = goToBottomWall = false;
+    // TBD
+    if (minWallDistance(bCHorizontal->x, bCHorizontal->y) < minWallDistance(bCVertical->x, bCVertical->y)) {
+        bestCell = bCHorizontal;
+    }
+    else {
+        bestCell = bCVertical;
+    }
 
-    int minEnemyX, maxEnemyX;
-    minEnemyX = 2'000'000'000;
-    maxEnemyX = -1;
+    boxing = true;
+    for (int i = 0; i < 4; i++) {
+        int x, y;
+
+        if (i / 2) {
+            x = minEnemyX;
+        }
+        else {
+            x = maxEnemyX;
+        }
+
+        if (i % 2) {
+            y = minEnemyY;
+        }
+        else {
+            y = maxEnemyY;
+        }
+
+        if (min(minHorizontalWallDistance(headX, headY), minVerticalWallDistance(headX, headY)) * 2 <= min(minHorizontalWallDistance(x, y), minVerticalWallDistance(x, y))) {
+            boxing = false;
+        }
+    }
+}
+
+bool isHuggingHorizontalWall() {
+    if (headX == 1 || headX == n) return true;
+    return false;
+}
+
+bool isHuggingVerticalWall() {
+    if (headY == 1 || headY == n) return true;
+    return false;
+}
+
+void calculateEnemyRectangleCorners() {
+    minEnemyX = minEnemyY = 2'000'000'000;
+    maxEnemyX = maxEnemyY = -1;
     for (int i = 1; i <= n; i++) {
         for (int j = 1; j <= n; j++) {
             if (mat[i][j].val == enemySnake) {
                 minEnemyX = min(minEnemyX, i);
                 maxEnemyX = max(maxEnemyX, i);
+                minEnemyY = min(minEnemyY, j);
+                maxEnemyY = max(maxEnemyY, j);
             }
         }
     }
 }
 
+void considerHuggingWall() {
+    if (isHuggingHorizontalWall()) {
+        int flippedX = n + 1 - headX;
+        int minProx = 2'000'000'000;
+        int distDif;
+
+        for (int i = 1; i <= n; i++) {
+            if (mat[flippedX][i].distMyHead > 1'000'000) continue;
+            distDif = mat[flippedX][i].distMyHead - mat[flippedX][i].minDistEnemyHead;
+            if (distDif > 0) continue;
+            if (distDif <= minProx) {
+                minProx = distDif;
+                targetY = i;
+            }
+        }
+
+        if (minProx < 0) hasTarget = true;
+
+        if (targetY > headY) goingRight = true;
+        if (targetY < headY) goingLeft = true;
+
+        if (goingRight || goingLeft) {
+            hasTargetY = true;
+        }
+        else {
+            if (headX == 1) {
+                goingDown = true;
+            }
+            else {
+                goingUp = true;
+            }
+            hasTargetX = true;
+        }
+
+        if (targetY <= n / 2 && maxEnemyY <= n / 2) {
+            huggingWall = true;
+        }
+        if (targetY > n / 2 && minEnemyY > n / 2) {
+            huggingWall = true;
+        }
+    }
+
+    if (isHuggingVerticalWall()) {
+        int flippedY = n + 1 - headY;
+        int minProx = 2'000'000'000;
+        int distDif;
+
+        for (int i = 1; i <= n; i++) {
+            if (test) cout << i << "\n";
+            if (mat[i][flippedY].distMyHead > 1'000'000) continue;
+            distDif = mat[i][flippedY].distMyHead - mat[i][flippedY].minDistEnemyHead;
+            if (distDif > 0) continue;
+            if (distDif <= minProx) {
+                minProx = distDif;
+                targetX = i;
+            }
+        }
+
+        if (minProx < 0) hasTarget = true;
+
+        if (targetX > headX) goingDown = true;
+        if (targetX < headX) goingUp = true;
+
+        if (goingUp || goingDown) {
+            hasTargetX = true;
+        }
+        else {
+            if (headY == 1) {
+                goingRight = true;
+            }
+            else {
+                goingLeft = true;
+            }
+            hasTargetY = true;
+        }
+
+        if (targetX <= n / 2 && maxEnemyX <= n / 2) {
+            huggingWall = true;
+        }
+        if (targetX > n / 2 && minEnemyY > n / 2) {
+            huggingWall = true;
+        }
+    }
+}
+
 char findDirection() {
+    const char dir[] = "VSEN";
+
+    if (boxing) {
+        int res;
+        bool found;
+        if (test) cout << bestCell->x << " " << bestCell->y << "\n";
+        for (int i = 0; i < 4; i++) {
+            if ((bestCell->x == (headX + dx[i])) && (bestCell->y == (headY + dy[i]))) {
+                res = i;
+                found = true;
+            }
+        }
+        if (found) {
+            return dir[res];
+        }
+    }
+
+    if (huggingWall) {
+        int res;
+
+        if (goingLeft) {
+            if (mat[headX][headY - 1].val == 0) {
+                res = 0;
+            }
+        }
+        if (goingDown) {
+            if (mat[headX + 1][headY].val == 0) {
+                res = 1;
+            }
+        }
+        if (goingRight) {
+            if (mat[headX][headY + 1].val == 0) {
+                res = 2;
+            }
+        }
+        if (goingUp) {
+            if (mat[headX - 1][headY].val == 0) {
+                res = 3;
+            }
+        }
+
+        return dir[res];
+    }
+
+    if (snakeTouchedWall(mySnake) && hasTarget) {
+        if (hasTargetX) {
+            bestCell = &mat[targetX][headY];
+        }
+        if (hasTargetY) {
+            bestCell = &mat[headX][targetY];
+        }
+
+        while (bestCell->myHeadLeeFather) {
+            bestCell = bestCell->myHeadLeeFather;
+        }
+
+        int res;
+        bool found;
+        for (int i = 0; i < 4; i++) {
+            if ((bestCell->x == (headX + dx[i])) && (bestCell->y == (headY + dy[i]))) {
+                res = i;
+                found = true;
+            }
+        }
+        if (found) {
+            return dir[res];
+        }
+    }
+
     // each cardinal direction has a cost (w[i]) equal to
     // the sum of the manhatten distances to all head candidates
-    const char dir[] = "VSEN";
     long long int w[4] = {0};
     for (int i = 0; i < 4; i++) {
         if (mat[headX + dx[i]][headY + dy[i]].val == 0) {
@@ -322,6 +573,9 @@ int main()
         setupLee();
         lee(cHead->x, cHead->y);
     }
+    calculateEnemyRectangleCorners();
+    considerBoxing();
+    considerHuggingWall();
     fout << findDirection() << "\n";
 
     return 0;

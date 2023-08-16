@@ -72,7 +72,8 @@ char findDirection() {
     const char dir[] = "VSEN";
     int w[4] = {0};
 
-    srand(time(nullptr));
+    int* p = new int;
+    srand(time(nullptr) + (long long)p);
     for (int i = 0; i < 4; i++) {
         w[i] = rand() % 50'000'000;
     }

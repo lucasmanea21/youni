@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1692176554 source:c:\andrei\programe\c++\concursuri\cshackathon\youni\algorithm 2 boxes\main.cpp
+	<iostream>
+	<fstream>
+	<vector>
+	<queue>
+	<cstring>
+
