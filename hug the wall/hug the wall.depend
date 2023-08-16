@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1692179830 source:c:\andrei\programe\c++\concursuri\cshackathon\youni\hug the wall\main.cpp
+	<iostream>
+	<fstream>
+	<vector>
+	<cstring>
+
